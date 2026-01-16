@@ -61,8 +61,8 @@ button:hover {
 </div>
 
 <script>
-const KEY_DURATION = 120; // 2 minutos em segundos
-let countdownInterval = null;
+const KEY_DURATION = 120; // 2 minutos
+let interval = null;
 
 function generateKey() {
     const now = Math.floor(Date.now() / 1000);
@@ -71,7 +71,7 @@ function generateKey() {
     const key = "BACCON-" + Math.random().toString(36).substr(2, 10).toUpperCase();
 
     localStorage.setItem("key", key);
-    localStorage.setItem("expireAt", expireAt);
+    localStorage.setItem("expireAt", expireAt.toString());
 
     document.getElementById("key").innerText = "Key: " + key;
 
@@ -79,22 +79,30 @@ function generateKey() {
 }
 
 function startCountdown() {
-    clearInterval(countdownInterval);
+    if (interval) clearInterval(interval);
 
-    countdownInterval = setInterval(() => {
-        const now = Math.floor(Date.now() / 1000);
+    interval = setInterval(() => {
         const expireAt = localStorage.getItem("expireAt");
+        const now = Math.floor(Date.now() / 1000);
 
-        if (!expireAt || now >= expireAt) {
-            clearInterval(countdownInterval);
-            document.getElementById("timer").innerText = "Key expirada!";
-            document.getElementById("key").innerText = "";
-            localStorage.removeItem("key");
-            localStorage.removeItem("expireAt");
+        if (!expireAt) {
+            clearInterval(interval);
+            document.getElementById("timer").innerText = "";
             return;
         }
 
-        const remaining = expireAt - now;
+        const remaining = parseInt(expireAt) - now;
+
+        if (remaining <= 0) {
+            clearInterval(interval);
+            localStorage.removeItem("key");
+            localStorage.removeItem("expireAt");
+
+            document.getElementById("key").innerText = "";
+            document.getElementById("timer").innerText = "Key expirada!";
+            return;
+        }
+
         const min = Math.floor(remaining / 60);
         const sec = remaining % 60;
 
@@ -103,8 +111,16 @@ function startCountdown() {
     }, 1000);
 }
 
-// se recarregar a página, continua o contador
-startCountdown();
+// mantém o contador após recarregar a página
+window.onload = () => {
+    const key = localStorage.getItem("key");
+    const expireAt = localStorage.getItem("expireAt");
+
+    if (key && expireAt) {
+        document.getElementById("key").innerText = "Key: " + key;
+        startCountdown();
+    }
+};
 </script>
 </body>
 </html>
