@@ -1,19 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Key System</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<meta charset="UTF-8">
+<title>Key System</title>
 
+<style>
+body {
+    background:#1E1E1E;
+    color:white;
+    font-family:Arial;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box {
+    background:#252526;
+    padding:30px;
+    border-radius:10px;
+    text-align:center;
+    width:320px;
+}
+
+button {
+    background:#007ACC;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    cursor:pointer;
+    border-radius:4px;
+    font-size:14px;
+}
+
+button:hover {
+    background:#1C97EA;
+}
+
+#key {
+    margin-top:15px;
+    font-weight:bold;
+    word-break:break-all;
+}
+
+#timer {
+    margin-top:10px;
+    color:#FFD700;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
 <div class="box">
     <h2>Gerar Key</h2>
     <button onclick="generateKey()">Gerar Key</button>
-    <p id="result"></p>
+
+    <div id="key"></div>
+    <div id="timer"></div>
 </div>
 
-<script src="script.js"></script>
+<script>
+const KEY_DURATION = 120; // 2 minutos em segundos
+let countdownInterval = null;
+
+function generateKey() {
+    const now = Math.floor(Date.now() / 1000);
+    const expireAt = now + KEY_DURATION;
+
+    const key = "BACCON-" + Math.random().toString(36).substr(2, 10).toUpperCase();
+
+    localStorage.setItem("key", key);
+    localStorage.setItem("expireAt", expireAt);
+
+    document.getElementById("key").innerText = "Key: " + key;
+
+    startCountdown();
+}
+
+function startCountdown() {
+    clearInterval(countdownInterval);
+
+    countdownInterval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+        const expireAt = localStorage.getItem("expireAt");
+
+        if (!expireAt || now >= expireAt) {
+            clearInterval(countdownInterval);
+            document.getElementById("timer").innerText = "Key expirada!";
+            document.getElementById("key").innerText = "";
+            localStorage.removeItem("key");
+            localStorage.removeItem("expireAt");
+            return;
+        }
+
+        const remaining = expireAt - now;
+        const min = Math.floor(remaining / 60);
+        const sec = remaining % 60;
+
+        document.getElementById("timer").innerText =
+            `Expira em: ${min}:${sec.toString().padStart(2, '0')}`;
+    }, 1000);
+}
+
+// se recarregar a página, continua o contador
+startCountdown();
+</script>
 </body>
 </html>
-
